@@ -1,0 +1,13 @@
+---
+# vars file for selinux
+
+selinux_packages:
+ - policycoreutils
+ - setools-console
+ - libsemanage-python
+ - policycoreutils-python
+ - selinux-policy-devel
+
+selinux_check_file: /usr/sbin/sestatus
+
+selinux_make_path: /usr/share/selinux/devel

@@ -1,0 +1,29 @@
+---
+# defaults file for selinux
+
+# Policy of SELinux
+selinux_policy: targeted
+
+# Status of SELinux
+selinux_state: enforcing
+
+# Configuration file
+#selinux_conf:
+
+# Booleans to configure
+selinux_booleans: []
+
+# Permissive domain in SELinux policy
+selinux_permissive: []
+
+# SELinux network port type definitions
+selinux_ports: []
+
+# SELinux file context mapping definitions
+selinux_fcontext: []
+
+# Compile and install custom policies
+selinux_custom_modules: []
+
+# Set contexts to file systems
+selinux_files_context: []

@@ -1,0 +1,46 @@
+---
+
+- name: "Set Module Facts"
+  set_fact:
+    module_name: "{{ module.name | lower }}"
+    module_path: "/opt/selinux/modules/{{ module.name | lower }}"
+
+- name: "Discover Module"
+  shell:        semodule -l | egrep "{{ module_name }}"
+  register:     module_search
+  failed_when:  false
+  changed_when: false
+
+- name: "Copy Module Directory"
+  copy:
+    src:   "{{ module.path }}/"
+    dest:  "{{ module_path }}"
+    force: yes
+  register: module_sources
+  when: module.state | default('enabled') in ['enabled', 'disabled']
+
+- name: "Compile and Install Custom Module"
+  shell: make -f "{{ selinux_make_path }}/Makefile" && semodule -i "{{ module_path }}/{{ module_name }}.pp" &
+  args:
+    chdir: "{{ module_path }}"
+  register: module_compiled
+  when: module.state | default('enabled') in ['enabled', 'disabled'] and
+        (not module_name in module_search.stdout_lines or
+         module.force | default(False) | bool or
+         module_sources | changed)
+
+- name: "Disable Custom Module"
+  shell: semodule -d "{{ module_name }}"
+  when: module.state | default('enabled') in ['disabled'] and
+        (module_name in module_search.stdout_lines or
+         module.force | default(False) | bool)
+
+- name: "Remove Custom Module"
+  shell: semodule -r "{{ module_name }}"
+  when: module.state | default('enabled') in ['absent'] and
+        (module_name in module_search.stdout_lines or
+         module.force | default(False) | bool)
+
+- name: "Force Change"
+  shell: semodule -RB
+  when: module.force | default(False) | bool

@@ -1,0 +1,113 @@
+---
+# tasks file for selinux
+
+- name: "Include OS-Specific Variables"
+  include_vars: "vars_{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml"
+  tags: selinux
+
+- name: "Install SELinux"
+  package: name="{{ item }}" state=present
+  with_items:
+   - "{{ selinux_packages }}"
+  tags: selinux
+
+- name: "Script Files"
+  copy:
+    src:    etc/profile.d
+    dest:   /etc
+    force:  yes
+    owner:  root
+    group:  root
+    mode:   '0644'
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+    directory_mode: '0755'
+  tags: selinux
+
+- name: "Set File System Contexts"
+  command: "chcon{% if item.recurse | default(False) %} -R{% endif %}{% if item.seuser is defined %} -u {{ item.seuser }}{% endif %}{% if item.serole is defined %} -r {{ item.serole }}{% endif %}{% if item.setype is defined %} -t {{ item.setype }}{% endif %} -- {{ item.path }}"
+  with_items:
+   - "{{ selinux_files_context }}"
+  tags: selinux
+
+- name: "SELinux Mode"
+  selinux:
+    state:  "{{ selinux_state }}"
+    policy: "{{ selinux_policy | default(omit) }}"
+    conf:   "{{ selinux_conf | default(omit) }}"
+  when: selinux_state is defined and
+        selinux_state != 'disabled'
+  async: 15
+  poll: 0
+  tags: selinux
+
+- name: "Configure Booleans"
+  seboolean:
+    name:       "{{ item.name }}"
+    state:      "{{ item.state | default(omit) }}"
+    persistent: "{{ item.persistent | default(omit) }}"
+  with_items: "{{ selinux_booleans | default([]) }}"
+  tags: selinux
+
+- name: "Change Permissive Domains"
+  selinux_permissive:
+    domain:     "{{ item.domain }}"
+    no_reload:  "{{ item.no_reload | default(omit) }}"
+    permissive: "{{ item.permissive | default(omit) }}"
+    store:      "{{ item.store | default(omit) }}"
+  with_items: "{{ selinux_permissive }}"
+  tags: selinux
+
+- name: "Read Defined Port"
+  shell: "semanage port -l | egrep -o '\b({{ selinux_ports | join('|') }})\b'"
+  changed_when: false
+  failed_when: false
+  register: port_defined
+  tags: selinux
+
+- name: "Manage Network Ports"
+  seport:
+    ports:  "{{ item.ports }}"
+    proto:  "{{ item.proto }}"
+    setype: "{{ item.setype }}"
+    state:  "{{ item.state | default('present') }}"
+    reload: "{{ item.reload | default(omit) }}"
+  with_items: "{{ selinux_ports }}"
+  when: (port_defined | success and item.state | default('present') == 'absent') or
+        (port_defined | failed  and item.state | default('present') == 'present')
+  tags: selinux
+
+- name: "Manages File Context Mappings"
+  sefcontext:
+    setype:  "{{ item.setype }}"
+    target:  "{{ item.target }}"
+    ftype:   "{{ item.ftype | default(omit) }}"
+    reload:  "{{ item.reload | default(omit) }}"
+    selevel: "{{ item.selevel | default(omit) }}"
+    seuser:  "{{ item.seuser | default(omit) }}"
+    state:   "{{ item.state | default(omit) }}"
+  with_items: "{{ selinux_fcontext }}"
+  tags: selinux
+
+- name: "Custom Directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner:  root
+    group:  root
+    mode:   '0755'
+    seuser: system_u
+    serole: object_r
+    setype: usr_t
+  with_items:
+   - /opt/selinux
+   - /opt/selinux/modules
+  tags: selinux
+
+- name: "Manage Custom Modules"
+  include: module.yml
+  with_items: "{{ selinux_custom_modules }}"
+  loop_control:
+    loop_var: module
+  tags: selinux
