@@ -20,7 +20,7 @@
   when: module.state | default('enabled') in ['enabled', 'disabled']
 
 - name: "Compile and Install Custom Module"
-  shell: make -f "{{ selinux_make_path }}/Makefile" && semodule -i "{{ module_path }}/{{ module_name }}.pp" &
+  shell: make -f "{{ selinux_make_path }}/Makefile" && semodule -i "{{ module_path }}/{{ module_name }}.pp"
   args:
     chdir: "{{ module_path }}"
   register: module_compiled
