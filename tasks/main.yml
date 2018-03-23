@@ -25,10 +25,19 @@
     directory_mode: '0755'
   tags: selinux
 
-- name: "Set File System Contexts"
-  command: "chcon{% if item.recurse | default(False) %} -R{% endif %}{% if item.seuser is defined %} -u {{ item.seuser }}{% endif %}{% if item.serole is defined %} -r {{ item.serole }}{% endif %}{% if item.setype is defined %} -t {{ item.setype }}{% endif %} -- {{ item.path }}"
+- name: "Custom Directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner:  root
+    group:  root
+    mode:   '0755'
+    seuser: system_u
+    serole: object_r
+    setype: usr_t
   with_items:
-   - "{{ selinux_files_context }}"
+   - /opt/selinux
+   - /opt/selinux/modules
   tags: selinux
 
 - name: "SELinux Mode"
@@ -40,6 +49,13 @@
         selinux_state != 'disabled'
   async: 15
   poll: 0
+  tags: selinux
+
+- name: "Manage Custom Modules"
+  include: module.yml
+  with_items: "{{ selinux_custom_modules }}"
+  loop_control:
+    loop_var: module
   tags: selinux
 
 - name: "Configure Booleans"
@@ -90,24 +106,8 @@
   with_items: "{{ selinux_fcontext }}"
   tags: selinux
 
-- name: "Custom Directories"
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner:  root
-    group:  root
-    mode:   '0755'
-    seuser: system_u
-    serole: object_r
-    setype: usr_t
+- name: "Set File System Contexts"
+  command: "chcon{% if item.recurse | default(False) %} -R{% endif %}{% if item.seuser is defined %} -u {{ item.seuser }}{% endif %}{% if item.serole is defined %} -r {{ item.serole }}{% endif %}{% if item.setype is defined %} -t {{ item.setype }}{% endif %} -- {{ item.path }}"
   with_items:
-   - /opt/selinux
-   - /opt/selinux/modules
-  tags: selinux
-
-- name: "Manage Custom Modules"
-  include: module.yml
-  with_items: "{{ selinux_custom_modules }}"
-  loop_control:
-    loop_var: module
+   - "{{ selinux_files_context }}"
   tags: selinux

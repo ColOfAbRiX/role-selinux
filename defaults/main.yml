@@ -4,26 +4,53 @@
 # Policy of SELinux
 selinux_policy: targeted
 
-# Status of SELinux
+# Status of SELinux (either enforcing or permissive)
 selinux_state: enforcing
 
 # Configuration file
 #selinux_conf:
 
-# Booleans to configure
-selinux_booleans: []
+# Compile and install custom policies
+selinux_custom_modules: []
+# - name:  nagios_custom_policy
+#   path:  selinux/nagios_policy
+#   # Status can be enabled, disabled or absent
+#   state: enabled
+#   force: yes
 
-# Permissive domain in SELinux policy
+# SELinux Booleans to configure
+selinux_booleans: []
+# - name:       http_port_t
+#   state:      123
+#   persistent: yes
+
+# SELinux permissive domain in SELinux policy
 selinux_permissive: []
+# - name:       httpd_t
+#   no_reload:  no
+#   permissive: yes
 
 # SELinux network port type definitions
 selinux_ports: []
+# - ports:  8888
+#   proto:  tcp
+#   setype: http_port_t
+#   state:  present
 
 # SELinux file context mapping definitions
 selinux_fcontext: []
+# - target:  '/srv/git_repos(/.*)?'
+#   ftype:   a
+#   reload:  yes
+#   selevel: s0-s0:c0.c1023
+#   setype   httpd_git_rw_content_t
+#   seuser:  system_u
+#   state:   present
 
-# Compile and install custom policies
-selinux_custom_modules: []
-
-# Set contexts to file systems
+# Set custom SELinux contexts to file systems
 selinux_files_context: []
+# - path:    /opt/my_app
+#   recurse: yes
+#   setype: usr_t
+#   serole: object_r
+#   seuser: system_u

@@ -1,38 +1,51 @@
-Role Name
-=========
+# role-selinux
 
-A brief description of the role goes here.
+Ansible role to install and configure a comple SELinux setup
 
-Requirements
-------------
+The role is fully generic and supports a variety of settings:
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+* Installs and guarantees that SELinux is enabled (in either permissive or enforcing mode)
+* Allows configuration of booleans, ports and permissive domains
+* It can set the contexts on the file systems
+* It can build and install custom SELinux policies
 
-Role Variables
---------------
+## Requirements
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The role requires RHEL/CentOS 7 to work.
 
-Dependencies
-------------
+## Role Variables
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+The variables are fully documented in the [default configuration](defaults/main.yml) file, including their default values and some examples.
 
-Example Playbook
-----------------
+| Variable                 | Default     | Description                               |
+| :---                     | :---        | :---                                      |
+| `selinux_policy`         | `targeted`  | Policy of SELinux.                        |
+| `selinux_state`          | `enforcing` | Status of SELinux.                        |
+| `selinux_booleans`       | `[]`        | Booleans to configure.                    |
+| `selinux_permissive`     | `[]`        | Permissive domain in SELinux policy.      |
+| `selinux_ports`          | `[]`        | SELinux network port type definitions.    |
+| `selinux_fcontext`       | `[]`        | SELinux file context mapping definitions. |
+| `selinux_custom_modules` | `[]`        | Compile and install custom policies.      |
+| `selinux_files_context`  | `[]`        | Set contexts to file systems.             |
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+## Example Playbook
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+Using the role without any specific configuration is very simple:
 
-License
--------
+```Yaml
+- hosts: servers
+  roles:
+   - role: selinux
+```
 
-BSD
+## License
 
-Author Information
-------------------
+MIT
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+## Author Information
+
+[Fabrizio Colonna](colofabrix@tin.it)
+
+## Contributors
+
+Pull requests are also very welcome. Please create a topic branch for your proposed changes. If you don't, this will create conflicts in your fork after the merge.
